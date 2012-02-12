@@ -1,0 +1,7 @@
+{
+  "name": "scour",
+  "version": "0.0.1",
+  "dependencies": {
+    "beeline": ">= 0.1.8"
+  }
+}
