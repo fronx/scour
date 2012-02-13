@@ -1,15 +1,18 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>scour demo</title>
-<script src="public/js/scour.js"></script>
+  <title>scour demo</title>
+   <style>
+    .scrubber { border: 1px solid #aaa; width: 70%; padding: 20px; background-color: #eee; }
+    .scour { border: 2px solid green; }
+    .scour-scrubbing { background-color: red; }
+  </style>
+  <script src="public/js/scour.js"></script>
 </head>
-<body>
-<div id="scrub-me" class="scrubber" style="border: 1px solid #aaa; width: 70%; padding: 20px; background-color: #eee;">
-&nbsp;
-</div>
-<script>
-  scour = new Scour('/fronx/day-off/audio', document.getElementById('scrub-me'));
-</script>
-</body>
+  <body>
+    <div id="scrub-me" class="scrubber">&nbsp;</div>
+    <script>
+      scour = new Scour('/fronx/day-off/audio', document.getElementById('scrub-me'));
+    </script>
+  </body>
 </html>
