@@ -31,29 +31,33 @@ var Scour = function (url, element) {
 
   function startScrub (ev) {
     scrubbing = true;
-    seek(track, posToSec(relativePos(ev)));
+    seek(track, posToSec(relativePos(ev)), true);
     element.classList.add("scour-scrubbing");
   }
 
   function stopScrub (ev) { // track, element
     scrubbing = false;
-    resetPlaybackRate(track);
+    seek(track, posToSec(relativePos(ev)), playing);
     element.classList.remove("scour-scrubbing");
   }
 
-  function seek (track, targetPos) {
+  function seek (track, targetPos, doPlay) {
     stop(track);
     initSource(track);
     track.timedPos = createTimedPos(targetPos);
-    resetPlaybackRate(track);
-    track.source.noteGrainOn(0, targetPos, track.duration - targetPos);
+    if (doPlay == true) {
+      playing = true;
+      resetPlaybackRate(track);
+      track.source.noteGrainOn(0, targetPos, track.duration - targetPos);
+    }
   }
 
   function play (track) {
-    seek(track, 0);
+    seek(track, 0, true);
   }
 
   function stop (track) {
+    playing = false;
     track.source.noteOff(0);
     resetPlaybackRate(track);
   }
@@ -64,18 +68,27 @@ var Scour = function (url, element) {
 
   function getPlaybackRate(timedPosA, timedPosB) {
     var r = (timedPosB.pos - timedPosA.pos) / (timedPosB.takenAt - timedPosA.takenAt);
-    console.log('playback rate: ' + r);
+    // console.log('playback rate: ' + r);
     return r;
   }
 
   function scrub (track, targetTimedPos) {
     var speedUp = getPlaybackRate(track.timedPos, targetTimedPos);
+    window.clearTimeout(scrubTimeout);
+    // console.log('playing again @ ' + track.timedPos.pos);
     if (speedUp <= 0) {
-      seek(track, targetTimedPos.pos)
+      seek(track, targetTimedPos.pos, true);
     } else {
-      track.source.playbackRate.exponentialRampToValueAtTime(speedUp, context.currentTime + 0.5);
-      track.source.playbackRate.exponentialRampToValueAtTime(1.0, context.currentTime + 1);
-    }
+      if (playing == false) {
+        seek(track, targetTimedPos.pos, true);
+      }
+      track.source.playbackRate.exponentialRampToValueAtTime(speedUp, context.currentTime + 0.1 / speedUp);
+      // console.log('takenAt diff: ' + (targetTimedPos.takenAt - track.timedPos.takenAt));
+      scrubTimeout = window.setTimeout(function () {
+        track.timedPos = targetTimedPos;
+        stop(track);
+      }, 1000 * (targetTimedPos.takenAt - track.timedPos.takenAt));
+    };
   }
 
   function initSource (track) {
@@ -90,7 +103,7 @@ var Scour = function (url, element) {
       track.buffer = buffer;
       track.length = buffer.length;
       track.duration = buffer.duration;
-      track.pos = createTimedPos(0);
+      track.timedPos = createTimedPos(0);
       initSource(track);
       onLoad(track);
     });
@@ -121,7 +134,9 @@ var Scour = function (url, element) {
 
 // -----------------------
   var context = new webkitAudioContext();
+  var playing = false;
   var scrubbing = false;
+  var scrubTimeout;
   var track = createTrack(url, function (track) {
     activate(element);
   });
@@ -131,6 +146,7 @@ var Scour = function (url, element) {
     ready: ready
   , play: function () { play(track); }
   , stop: function () { stop(track); }
-  , seek: function (pos) { seek(track, pos); }
+  , seek: function (pos) { seek(track, pos, true); }
+  , track : track
   };
 };
